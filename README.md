@@ -127,7 +127,43 @@ public ListNode deleteDuplicates(ListNode head) {
         }
         return dummyHead.next;
     }
+```
 
+
+
+### [167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/description/)
+两数之和是leetcode的开门题目,常用的暴力法就可以解决,另外就是哈希表的方法,为了表示比较,列举两种办法
+
+[1. 两数之和](https://leetcode.cn/problems/two-sum/)
+解答如下
+```java
+public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            if (map.containsKey(target - nums[i]))
+                return new int[]{i, map.get(target - nums[i])};
+            map.put(nums[i], i);
+        }
+        return new int[]{-1, -1};
+    }
+```
+现在回到这一道题,和之前不同的地方在于,这里输入数组是有序数组,但是要求了必须使用常量级额外的空间. 由于是有序数组,其实很容易想到使用双指针,其实这里面有一点贪心算法的思路,也就是当有序数组两个元素A + B  > target的时候,需要减少右端的值,当值 A+ B < target的时候需要右移动A,即比较小的值
+
+```Java
+public int[] twoSum(int[] numbers, int target) {
+        int len = numbers.length;
+        int low = 0, high = len -1;
+        while (low <= high){
+            if (numbers[low] + numbers[high] == target)
+                return new int[]{low+1, high +1};
+            else if (numbers[low] + numbers[high] < target)
+                low++;
+            else
+                high--;
+        }
+        
+        return new int[]{-1,-1};
+    }
 ```
 ## 三、动态规划
 
@@ -336,6 +372,61 @@ class Solution {
 
 ```
 
+### [304. 二维区域和检索 - 矩阵不可变](https://leetcode.cn/problems/range-sum-query-2d-immutable/description/)
+   在leetcode有一些题利用的是前缀和方法，很多时候都用的是图形法解，一开始还是有点费解的，特别是对于我这样不太擅长图形转化成公式的人来说。本文用的单纯的数学推导得到递推公式，理解的基础上直接用代码实现公式
+
+计算公式如下:
+$$
+S[row1,row2][col1,col2] = \Sigma_{row1}^{row2}\Sigma_{col1}^{col2} Matix[i][j]
+$$
+其中$i\in[row1,row2],j\in[col1,col2]$
+
+使用伪代码如下
+```java
+int sum = 0;
+for i from row1 -> row2
+    for j from col1 -> col2
+        sum = sum + Matrix[i][j]
+return sum
+```
+但是在上述求解过程中不难发现求解S[i][j]会反复计算Matrix[0][0],Matrix[0][1],Matrix[1][0]...求解区域越大前面的元素被求解调用的次数越多，其实不难发现就是存在重复子问题，可以考虑动态规划，借用之前图形就是
+![avatar](graphs/%E5%8C%BA%E5%9F%9F%E5%92%8C%E6%B1%82%E8%A7%A3%E7%A4%BA%E6%84%8F%E5%9B%BE.png)
+
+对应的式子是$S[D] =S[D_{total}] -S[A] - S[B] + S[C]$.
+其中$S[D_{total}]$为D区域右下角坐标到原点的求和。由上式不难发现，子问题被存储在数组S中，避免了反复对Matrix的求和。
+针对S[D]求解，计算公式为$S[D_x][D_y] = \Sigma_{0}^{D_x}\Sigma_{0}^{D_y} Matix[i][j]$,这个问题一样，反复求解之前数据，思路和之前一样，如果直接求解，就是遍历$[0,D_x],[0,D_y]$区间，针对求和公式分解，定义$S[k_x][k_y]$为坐标点k的，由原点到该坐标的方块区域内坐标点求和
+$$
+\begin{align*}  S[k_x][k_y] &= \Sigma_{0}^{k_x}\Sigma_{0}^{k_y} Matix[i][j] \\                    &= \Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y-1}Matrix[i][j] +  \Sigma_{0}^{k_x-1}Matrix[i][k_y]  + \Sigma_{0}^{k_y-1}Matrix[k_x][j] + Matrix[k_x][k_y]\\ &=  \Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y}Matrix[i][j] +   \Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y-1}Matrix[i][j]  -\Sigma_{0}^{k_x}\Sigma_{0}^{k_y-1}Matrix[i][j] + Matrix[k_x][k_y]\\ &=S[k_x-1][k_y] + S[k_x][k_y-1] - S[k_x -1][k_y-1] + Matrix[k_x][k_y] \end{align*}
+$$
+因为$S[k_x-1][k_y]  =\Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y}Matrix[i][j] =  \Sigma_{0}^{k_x-1}Matrix[i][k_y] +  \Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y-1}Matrix[i][j]$,同理对于$S[k_x][k_y-1]$不难推导得到,而$S[k_x -1][k_y-1]  = \Sigma_{0}^{k_x-1}\Sigma_{0}^{k_y-1}Matrix[i][j]$即为重叠区域，上述递推式子即只需要每次加上$Matrix[i][j]$即可，而无需反复求和，利用空间换时间
+
+总结起来就是两个递推式
+$$
+\begin{equation}   \begin{cases} 1、S[k_x][k_y] = S[k_x-1][k_y] + S[k_x][k_y-1] - S[k_x -1][k_y-1] + Matrix[k_x][k_y] \\ 2、S[D_{shadow}] =S[D_x][D_y] -S[A_x][A_y] - S[B_x][B_y] + S[C_x][C_y] \end{cases} \end{equation} 
+$$
+
+最终答案如下:
+```java
+class NumMatrix {
+    private int[][] dp;
+    public NumMatrix(int[][] matrix) {
+        // int m = matrix.length;
+        // int n = matrix[0].length;此处会报错,因为matrix没有matrix[0]
+        // System.out.println(matrix.length);
+        // System.out.println(matrix[0].length);
+        if(matrix.length ==0 || matrix[0].length ==0) return;
+        dp = new int[matrix.length+1][matrix[0].length+1];
+        for(int i = 0;i<matrix.length;i++ )
+            for(int j= 0;j<matrix[0].length;j++)
+                dp[i+1][j+1] = dp[i][j+1]+dp[i+1][j] - dp[i][j] + matrix[i][j];
+    }
+    
+    public int sumRegion(int row1, int col1, int row2, int col2) {
+        return dp[row2+1][col2+1] - dp[row1][col2+1] - dp[row2+1][col1] + dp[row1][col1];
+    }
+}
+```
+
 ## 四、贪心算法
 在前一节动态规划中,我们还曾使用过贪心算法来计算,这里我们从分发饼干开始计算
 
@@ -355,4 +446,59 @@ class Solution {
         }
         return child;
     }
+```
+
+## 回溯算法
+回溯算法其实也算是一种暴力算法,只不过存在一些剪枝操作. 回溯算法一般的结构为:
+```Java
+void backtracking(params){
+    if(终止条件){
+        存放结果;
+        return;
+    }
+
+    for(本层元素){
+        处理节点;
+        backtracking(params,一般是下一个选择);
+        回溯,还原状态
+    }
+}
+```
+回溯算法里面经典的就是N皇后,全排列等问题.
+首先从最简单的树图的中序遍历开始
+### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/description/)
+其实只需要dfs即可,判断好终止条件
+```java
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+class Solution {
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        inorderTraversal(root,res);
+
+        return res;
+    }
+    
+    private void inorderTraversal(TreeNode root,List<Integer> res){
+        if (root == null)
+            return ;
+        
+        inorderTraversal(root.left,res);
+        res.add(root.val);
+        inorderTraversal(root.right,res);
+    }
+}
 ```
