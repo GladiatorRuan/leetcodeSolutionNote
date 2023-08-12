@@ -466,6 +466,62 @@ void backtracking(params){
 ```
 回溯算法里面经典的就是N皇后,全排列等问题.
 首先从最简单的树图的中序遍历开始
+
+## 递归算法
+递归算法类似于数学归纳法,递归的特点在于
+
+### [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/description/)
+合并两个有序链表.由于2个链表已经排序,因此只需要对链表进行值表,由于2个链表长短不一,因此在遍历的时候需要稍微注意一点
+非递归写法
+```java
+public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        ListNode dummyHead = new ListNode(0);
+        ListNode pre = dummyHead;
+        while(list1 != null && list2 != null){
+            if (list1.val < list2.val){
+                pre.next = list1;
+                list1 = list1.next;
+            }
+            else{
+                pre.next = list2;
+                list2 = list2.next;
+            }
+            pre = pre.next;
+        }
+        while(list1 != null){
+            pre.next = list1;
+            list1 = list1.next;
+            pre = pre.next;
+        }
+
+        while(list2 != null){
+            pre.next = list2;
+            list2 = list2.next;
+            pre = pre.next;
+        }
+        return dummyHead.next;
+    }
+```
+
+递归写法
+```java
+public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        if (l1 == null) return l2;
+        if (l2 == null) return l1;
+
+        if (l1.val < l2.val) {
+            l1.next = mergeTwoLists(l1.next, l2);
+            return l1;
+        }
+        
+        else
+        {
+            l2.next = mergeTwoLists(l2.next,l1);
+            return l2;
+        }
+    }
+```
+
 ### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/description/)
 其实只需要dfs即可,判断好终止条件
 ```java
